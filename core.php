@@ -9,6 +9,7 @@ $_GET = array_map('strip_tags', $_GET);
 $_POST = array_map('strip_tags', $_POST);
 $_GET = array_map('htmlspecialchars', $_GET);
 $_POST = array_map('htmlspecialchars', $_POST);
+/*DESATIDO POR UM TEMPO...                            ############################
 //function, anti_injection protector
 function  anti_injection($sql)
 {
@@ -17,18 +18,10 @@ $sql = preg_replace(sql_regcase("/(from|select|insert|delete|where|drop table|sh
 $sql = trim($sql);//clear gaps
 return $sql;
 }
+*/                                                   ##############################
 $_GET = array_map('anti_injection', $_GET);
 $_POST = array_map('anti_injection', $_POST);
-////connect db
-function bd_connect()
-{
-global $dbname, $dbuser, $dbhost, $dbpass;
-$conms = @mysql_connect($dbhost,$dbuser,$dbpass); //connect mysql
-if(!$conms) return false;
-$condb = @mysql_select_db($dbname);
-if(!$condb) return false;
-return true;
-}
+
 function arquivo_extfoto($ext)
 {
 $ext = strtolower($ext);
@@ -116,7 +109,7 @@ $ue = $errl = $pe = $ce = "";
 switch($ef)
 {
 case 1:
-$errl = "<img src=\"images/point.gif\" alt=\"!\"/> Digite o usuário!";
+$errl = "<img src=\"images/point.gif\" alt=\"!\"/> Digite o usuï¿½rio!";
 $ue = "<img src=\"images/point.gif\" alt=\"!\"/>";
 break;
 case 2:
@@ -128,19 +121,19 @@ $errl = "<img src=\"images/point.gif\" alt=\"!\"/> Confirme sua senha!";
 $ce = "<img src=\"images/point.gif\" alt=\"!\"/>";
 break;
 case 4:
-$errl = "<img src=\"images/point.gif\" alt=\"!\"/> Usuário inválido!";
+$errl = "<img src=\"images/point.gif\" alt=\"!\"/> Usuï¿½rio invï¿½lido!";
 $ue = "<img src=\"images/point.gif\" alt=\"!\"/>";
 break;
 case 5:
-$errl = "<img src=\"images/point.gif\" alt=\"!\"/> Senha inválida!";
+$errl = "<img src=\"images/point.gif\" alt=\"!\"/> Senha invï¿½lida!";
 $pe = "<img src=\"images/point.gif\" alt=\"!\"/>";
 break;
 case 6:
-$errl = "<img src=\"images/point.gif\" alt=\"!\"/> Senhas não combinam!";
+$errl = "<img src=\"images/point.gif\" alt=\"!\"/> Senhas nï¿½o combinam!";
 $ce = "<img src=\"images/point.gif\" alt=\"!\"/>";
 break;
 case 7:
-$errl = "<img src=\"images/point.gif\" alt=\"!\"/> Usuário tem que ter mais de 5 caracteres!";
+$errl = "<img src=\"images/point.gif\" alt=\"!\"/> Usuï¿½rio tem que ter mais de 5 caracteres!";
 $ue = "<img src=\"images/point.gif\" alt=\"!\"/>";
 break;
 case 8:
@@ -148,23 +141,23 @@ $errl = "<img src=\"images/point.gif\" alt=\"!\"/> Senha tem que ter mais de 8 c
 $pe = "<img src=\"images/point.gif\" alt=\"!\"/>";
 break;
 case 9:
-$errl = "<img src=\"images/point.gif\" alt=\"!\"/> Usuário em uso escolha outro!";
+$errl = "<img src=\"images/point.gif\" alt=\"!\"/> Usuï¿½rio em uso escolha outro!";
 $ue = "<img src=\"images/point.gif\" alt=\"!\"/>";
 break;
 case 10:
-$errl = "<img src=\"images/point.gif\" alt=\"!\"/> Campos dia, mes, ano não podem ficar em branco!";
+$errl = "<img src=\"images/point.gif\" alt=\"!\"/> Campos dia, mes, ano nï¿½o podem ficar em branco!";
 break;
 case 11:
-$errl = "<img src=\"images/point.gif\" alt=\"!\"/> Apenas números podem ser colocados no aniversário!";
+$errl = "<img src=\"images/point.gif\" alt=\"!\"/> Apenas nï¿½meros podem ser colocados no aniversï¿½rio!";
 break;
 case 12:
-$errl = "<img src=\"images/point.gif\" alt=\"!\"/> Digite o código de segurança!";
+$errl = "<img src=\"images/point.gif\" alt=\"!\"/> Digite o cï¿½digo de seguranï¿½a!";
 break;
 case 13:
-$errl = "<img src=\"images/point.gif\" alt=\"!\"/> Código de segurança errado!";
+$errl = "<img src=\"images/point.gif\" alt=\"!\"/> Cï¿½digo de seguranï¿½a errado!";
 break;
 case 14:
-$errl = "<img src=\"images/point.gif\" alt=\"!\"/> Caracteres não permitidos no usuário!";
+$errl = "<img src=\"images/point.gif\" alt=\"!\"/> Caracteres nï¿½o permitidos no usuï¿½rio!";
 break;
 }
 $rform = "<small>$errl</small>";
@@ -335,33 +328,34 @@ return true;
 ////cleandata apaga todos os dados antigos
 function cleardata()
 {
+    global $pdo;
 /////deleta as punicoes vencidas
 $tempo_fim = time();
-mysql_query("DELETE FROM fun_ban WHERE tempo < '".$tempo_fim."'");
+$pdo->query("DELETE FROM fun_ban WHERE tempo < '".$tempo_fim."'");
 $timeto = 120;
 $timenw = time();
 $timeout = $timenw - $timeto;
-mysql_query("DELETE FROM fun_chonline WHERE lton<'".$timeout."'");
+$pdo->query("DELETE FROM fun_chonline WHERE lton<'".$timeout."'");
 $timeto = 300;
 $timenw = time();
 $timeout = $timenw - $timeto;
-mysql_query("DELETE FROM fun_chat WHERE timesent<'".$timeout."'");
+$pdo->query("DELETE FROM fun_chat WHERE timesent<'".$timeout."'");
 $timeto = 60*60;
 $timenw = time() ;
 $timeout = $timenw - $timeto;
-mysql_query("DELETE FROM fun_search WHERE stime<'".$timeout."'");
-$lbpm = mysql_fetch_array(mysql_query("SELECT value FROM fun_settings WHERE name='lastbpm'"));
+$pdo->query("DELETE FROM fun_search WHERE stime<'".$timeout."'");
+$lbpm = $pdo->query("SELECT value FROM fun_settings WHERE name='lastbpm'")->fetch();
 $td = date("Y-m-d");
 if ($td!=$lbpm[0])
 {
 $sql = "SELECT id, name, birthday  FROM fun_users where month(`birthday`) = month(curdate()) and dayofmonth(`birthday`) = dayofmonth(curdate())";
-$ppl = mysql_query($sql);
-while($mem = mysql_fetch_array($ppl))
+$ppl = $pdo->query($sql);
+while($mem = $ppl->fetch())
 {
-$msg = "O ".$snome." deseja a você um feliz aniversário![br/]Abraços da Equipe, até breve!";
+$msg = "O ".$snome." deseja a vocÃª um feliz aniversÃ¡rio![br/]AbraÃ§os da Equipe, atÃ© breve!";
 autopm($msg, $mem[0], "Feliz aniversario");
 }
-mysql_query("UPDATE fun_settings SET value='".$td."' WHERE name='lastbpm'");
+$pdo->query("UPDATE fun_settings SET value='".$td."' WHERE name='lastbpm'");
 }
 }
 ///////////////////////////////////////get file ext.
@@ -661,7 +655,7 @@ return true;
 return false;
 }
 }
-///////////////////////////se o registro é permitido
+///////////////////////////se o registro ï¿½ permitido
 function canreg()
 {
 $getreg = mysql_fetch_array(mysql_query("SELECT value FROM fun_settings WHERE name='reg'"));
@@ -717,10 +711,11 @@ return false;
 ////////////////////////////////////////////IS LOGGED?
 function is_logado($sid)
 {
+    global $pdo;
 //delete old sessions first
-$deloldses = mysql_query("DELETE FROM fun_ses WHERE expiretm<'".time()."'");
+$deloldses = $pdo->exec("DELETE FROM fun_ses WHERE expiretm<'".time()."'");
 //does sessions exist?
-$sesx = mysql_fetch_array(mysql_query("SELECT COUNT(*) FROM fun_ses WHERE id='".$sid."'"));
+$sesx = $pdo->query("SELECT COUNT(*) FROM fun_ses WHERE id='".$sid."'")->fetch();
 if($sesx[0]>0)
 {
 if(!isuser(getuid_sid($sid)))
@@ -730,7 +725,7 @@ return false;
 //yip it's logged in
 //first extend its session expirement time
 $xtm = (time() + (60*getsxtm())) ;
-$extxtm = mysql_query("UPDATE fun_ses SET expiretm='".$xtm."' WHERE id='".$sid."'");
+$extxtm = $pdo->exec("UPDATE fun_ses SET expiretm='".$xtm."' WHERE id='".$sid."'");
 return true;
 }else{
 //nope its session must be expired or something
@@ -747,18 +742,19 @@ return getnick_uid($uid);
 ////////////////////////Get user id from session id
 function getuid_sid($sid)
 {
-$uid = mysql_fetch_array(mysql_query("SELECT uid FROM fun_ses WHERE id='".$sid."'"));
-$uid = $uid[0];
+    global $pdo;
+$uid = $pdo->query("SELECT uid FROM fun_ses WHERE id='".$sid."'")->fetch();
+$uid = isset($uid[0])? $uid[0]: null;
 return $uid;
 }
 function getnotcount($uid)
 {
-$nopm = mysql_fetch_array(mysql_query("SELECT COUNT(*) FROM fun_notificacoes WHERE touid='".$uid."'"));
+$nopm = $pdo->query("SELECT COUNT(*) FROM fun_notificacoes WHERE touid='".$uid."'")->fetch();
 return $nopm[0];
 }
 function getunreadnot($uid)
 {
-$nopm = mysql_fetch_array(mysql_query("SELECT COUNT(*) FROM fun_notificacoes WHERE touid='".$uid."' AND unread='1'"));
+$nopm = $pdo->query("SELECT COUNT(*) FROM fun_notificacoes WHERE touid='".$uid."' AND unread='1'")->fetch();
 return $nopm[0];
 }
 /////////////////////Get total number of pms
@@ -866,7 +862,8 @@ mysql_query("UPDATE fun_mpot SET ppl='".$result[0]."', dtm='".date("H:i:s")."' W
 /////////////////////Get members online
 function getnumonline()
 {
-$nouo = mysql_fetch_array(mysql_query("SELECT COUNT(*) FROM fun_online "));
+    global $pdo;
+$nouo = $pdo->query("SELECT COUNT(*) FROM fun_online ")->fetch();
 return $nouo[0];
 }
 //////////////////////////////////////is ignored
@@ -991,7 +988,8 @@ return "$sec Segundos";
 }
 function getstatus($uid)
 {
-$info = mysql_fetch_array(mysql_query("SELECT perm, plusses, vip FROM fun_users WHERE id='".$uid."'"));
+    global $pdo;
+$info = $pdo->query("SELECT perm, plusses, vip FROM fun_users WHERE id='".$uid."'")->fetch();
 if(is_banido($uid))
 {
 return "Banido!";
@@ -1017,7 +1015,7 @@ return "Novato";
 return "Frequente";
 }else if($info[1]<99)
 {
-return "EstaçãoBronze";
+return "Estaï¿½ï¿½oBronze";
 }else if($info[1]<249)
 {
 return "Super frequente";
@@ -1026,7 +1024,7 @@ return "Super frequente";
 return "Titan";
 }else if($info[1]<749)
 {
-return "Usuário especial";
+return "Usuï¿½rio especial";
 }else if($info[1]<999)
 {
 return "Super prata";
@@ -1044,7 +1042,7 @@ return "Earthquake";
 return "MelhorOuro";
 }else if($info[1]<3999)
 {
-return "Sócio amigo";
+return "Sï¿½cio amigo";
 }else if($info[1]<4999)
 {
 return "Tsunami";
@@ -1062,10 +1060,10 @@ return "Power graduado";
 return "Power super graduado";
 }else if($info[1]<40000)
 {
-return "Smart máximus";
+return "Smart mï¿½ximus";
 }else
 {
-return "Smart máximus";
+return "Smart mï¿½ximus";
 }
 }
 }
@@ -1084,12 +1082,14 @@ return $rets;
 /////////////////////Get unread number of pms
 function getunreadpm($uid)
 {
-$nopm = mysql_fetch_array(mysql_query("SELECT COUNT(*) FROM fun_private WHERE touid='".$uid."' AND unread='1'"));
+    global $pdo;
+$nopm = $pdo->query("SELECT COUNT(*) FROM fun_private WHERE touid='".$uid."' AND unread='1'")->fetch();
 return $nopm[0];
 }
 function ip_ban($ip, $br)
 {
-$ipa = mysql_fetch_array(mysql_query("SELECT COUNT(*) FROM fun_ban WHERE ip='".$ip."' AND browser='".$br."' AND tipoban='2' "));
+    global $pdo;
+$ipa = $pdo->query("SELECT COUNT(*) FROM fun_ban WHERE ip='".$ip."' AND browser='".$br."' AND tipoban='2' ")->fetch();
 if($ipa[0]==0)
 {
 return false;
@@ -1100,9 +1100,10 @@ return true;
 }
 function is_banido($uid)
 {
+    global $pdo;
 $ttime = time();
-$del = mysql_query("DELETE FROM fun_ban WHERE tempo<'".$ttime."'");
-$not = mysql_fetch_array(mysql_query("SELECT COUNT(*) FROM fun_ban WHERE uid='".$uid."' AND (tipoban='1' OR tipoban='2')"));
+$del = $pdo->exec("DELETE FROM fun_ban WHERE tempo<'".$ttime."'");
+$not = $pdo->query("SELECT COUNT(*) FROM fun_ban WHERE uid='".$uid."' AND (tipoban='1' OR tipoban='2')")->fetch();
 if($not[0]==0)
 {
 return false;
@@ -1114,37 +1115,38 @@ return true;
 //////////////////////GET USER NICK FROM USERID
 function getnick_uid($uid)
 {
-$unick = mysql_fetch_array(mysql_query("SELECT name, plusses, perm, vip, sex FROM fun_users WHERE id='".$uid."'"));
+    global $pdo;
+$unick = $pdo->query("SELECT name, plusses, perm, vip, sex FROM fun_users WHERE id='".$uid."'")->fetch();
 if($uid=="1")
 {
 return "<b style=\"color: #000\">$unick[0]</b>";
 }
-else if($unick[2]=='2')
+else if(isset($unick[2])? $unick[2]:null =='2')
 {
 return "<b style=\"color: red\">$unick[0]</b>";
 }
-else if($unick[2]=='1')
+else if(isset($unick[2])? $unick[2]: null =='1')
 {
 return "<b style=\"color: green\">$unick[0]</b>";
 }
-else if($unick[3]=='1')
+else if(isset($unick[3])? $unick[3]: null=='1')
 {
 return "<b style=\"color: #ff4500\">$unick[0]</b>";
 }
-else if($unick[4]=='G')
+else if(isset($unick[4])? $unick[4]: null =='G')
 {
 return "<b style=\"color: purple\">$unick[0]</b>";
 }
-else if($unick[4]=='M')
+else if(isset($unick[4])? $unick[4]: null =='M')
 {
 return "<b style=\"color: #00008b\">$unick[0]</b>";
 }
-else if($unick[4]=='F')
+else if(isset($unick[4])? $unick[4]: null=='F')
 {
 return "<b style=\"color: #ff3e96\">$unick[0]</b>";
 }
 else{
-return $unick[0];
+return isset($unick[0])? $unick[0]: null;
 }
 }
 function getnumpages($tid)
