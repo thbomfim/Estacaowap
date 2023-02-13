@@ -9,16 +9,16 @@ $_GET = array_map('strip_tags', $_GET);
 $_POST = array_map('strip_tags', $_POST);
 $_GET = array_map('htmlspecialchars', $_GET);
 $_POST = array_map('htmlspecialchars', $_POST);
-/*DESATIDO POR UM TEMPO...                            ############################
+
 //function, anti_injection protector
 function  anti_injection($sql)
 {
 //removes  words that contain sql  syntax
-$sql = preg_replace(sql_regcase("/(from|select|insert|delete|where|drop table|show tables|\*|--|\\\\)/"),"",$sql);
+$sql = preg_replace("/(from|select|insert|delete|where|drop table|show tables|\*|--|\\\\)/");
 $sql = trim($sql);//clear gaps
 return $sql;
 }
-*/                                                   ##############################
+
 $_GET = array_map('anti_injection', $_GET);
 $_POST = array_map('anti_injection', $_POST);
 
