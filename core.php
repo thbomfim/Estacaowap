@@ -9,18 +9,16 @@ $_GET = array_map('strip_tags', $_GET);
 $_POST = array_map('strip_tags', $_POST);
 $_GET = array_map('htmlspecialchars', $_GET);
 $_POST = array_map('htmlspecialchars', $_POST);
-
+/*
 //function, anti_injection protector
 function  anti_injection($sql)
 {
 //removes  words that contain sql  syntax
-$sql = preg_replace("/(from|select|insert|delete|where|drop table|show tables|\*|--|\\\\)/");
+$sql = preg_replace("/(from|select|insert|delete|where|drop table|show tables|\*|--|\\\\)/"),"",$sql;
 $sql = trim($sql);//clear gaps
 return $sql;
 }
-
-$_GET = array_map('anti_injection', $_GET);
-$_POST = array_map('anti_injection', $_POST);
+*/
 
 function arquivo_extfoto($ext)
 {
@@ -199,7 +197,8 @@ mysql_query("INSERT INTO fun_log SET msg='".$msg."', data='".time()."'");
 ///////////////////////////////////function isuser
 function isuser($uid)
 {
-$cus = mysql_fetch_array(mysql_query("SELECT COUNT(*) FROM fun_users WHERE id='".$uid."'"));
+    global $pdo;
+$cus = $pdo->query("SELECT COUNT(*) FROM fun_users WHERE id='".$uid."'")->fetch();
 if($cus[0]>0)
 {
 return true;
@@ -285,7 +284,11 @@ return $acc;
 }
 function getnick_uid2($uid)
 {
-$unick = mysql_fetch_array(mysql_query("SELECT name FROM fun_users WHERE id='".$uid."'"));
+    global $pdo;
+$unick = "SELECT name FROM fun_users WHERE id=:uid";
+$stmt = $pdo->prepare($unick);
+$stmt->bindValue(':uid', $uid);
+$stmt->execute();
 return $unick[0];
 }
 function getuage_sid($sid)
@@ -655,10 +658,11 @@ return true;
 return false;
 }
 }
-///////////////////////////se o registro � permitido
+///////////////////////////se o registro é permitido
 function canreg()
 {
-$getreg = mysql_fetch_array(mysql_query("SELECT value FROM fun_settings WHERE name='reg'"));
+    global $pdo;
+$getreg = $pdo->query("SELECT value FROM fun_settings WHERE name='reg'")->fetch();
 if($getreg[0]=='1')
 {
 return true;
@@ -1176,14 +1180,21 @@ return $text;
 }
 function autopm($msg, $who)
 {
-mysql_query("INSERT INTO fun_private SET text='".$msg."', byuid='1', touid='".$who."', unread='1', timesent='".time()."'");
+    global $pdo;
+$comando = "INSERT INTO fun_private SET text=:msg, byuid='1', touid=:who, unread='1', timesent=:time";
+$stmt = $pdo->prepare($comando);
+$stmt->bindValue(':msg', $msg);
+$stmt->bindValue(':who', $who);
+$stmt->bindValue(':time',time());
+$stmt->execute();
 }
 ////////////////////////////////////////////////////Register
 /////////////////////// GET fun_users user id from nickname
 function getuid_nick($nick)
 {
-$uid = mysql_fetch_array(mysql_query("SELECT id FROM fun_users WHERE name='".$nick."'"));
-return $uid[0];
+    global $pdo;
+$uid = $pdo->query("SELECT id FROM fun_users WHERE name='".$nick."'")->fetch();
+return isset($uid[0]) ? $uid[0]: null;
 }
 ////////////////////////////////////////////is mod
 function ismod($uid)

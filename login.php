@@ -2,8 +2,7 @@
 ///include core.php and config.php files
 require_once("core.php");
 require_once("config.php");
-///connect db
-bd_connect();
+
 //html code
 echo "<?xml version=\"1.0\" encoding=\"ISO-8859-1\" ?>";
 echo "<!DOCTYPE html PUBLIC \"-//WAPFORUM//DTD XHTML Mobile 1.0//EN\"\"http://www.wapforum.org/DTD/xhtml-mobile10.dtd\">";
@@ -28,42 +27,55 @@ else
 $usuario = $_GET["usuario"];
 }
 //verification in user name
-$v_usuario = mysql_fetch_array(mysql_query("SELECT COUNT(*) FROM fun_users WHERE name = '".$usuario."' "));
+$v_usuario = "SELECT COUNT(*) FROM fun_users WHERE name =:name";
+$stmt = $pdo->prepare($v_usuario);
+$stmt->bindValue(':name',$usuario);
+$stmt->execute();
 if($v_usuario[0]==0 OR empty($v_usuario[0]))
 {
 echo "<p align=\"center\">";
 echo "<img src=\"images/logo.png\" alt=\"\"><br />";
 echo "<br />";
-echo "<img src=\"images/notok.gif\">Usuário não existe!<br />";
+echo "<img src=\"images/notok.gif\">UsuÃ¡rio nÃ£o existe!<br />";
 echo "</p>";
 echo "<p align=\"center\">";
-echo "<a href=\"index.php\"><img src=\"images/home.gif\">Página principal</a>";
+echo "<a href=\"index.php\"><img src=\"images/home.gif\">PÃ¡gina principal</a>";
 echo "</p>";
 }
 else
 {
 //verification in username and password if are correct
-$v_senha = mysql_fetch_array(mysql_query("SELECT COUNT(*) FROM fun_users WHERE name = '".$usuario."' AND pass = '".substr($senha, 4, 32)."'"));
+$v_senha = "SELECT COUNT(*) FROM fun_users WHERE name = :name AND pass = :pass";
+$stmt = $pdo->prepare($v_senha);
+$stmt->bindValue(':name', $usuario);
+$stmt->bindValue(':pass', substr($senha, 4, 32));
+$stmt->execute();
 if($v_senha[0]==0 OR empty($v_senha[0]))
 {
 echo "<p align=\"center\">";
 echo "<img src=\"images/logo.png\" alt=\"\"><br />";
 echo "<br />";
-echo "<img src=\"images/notok.gif\">A senha digitada por você não confere com a cadastrada!<br />";
+echo "<img src=\"images/notok.gif\">A senha digitada por vocï¿½ nï¿½o confere com a cadastrada!<br />";
 echo "</p>";
 echo "<p align=\"center\">";
-echo "<a href=\"index.php\"><img src=\"images/home.gif\">Página principal</a>";
+echo "<a href=\"index.php\"><img src=\"images/home.gif\">Pï¿½gina principal</a>";
 echo "</p>";
 }
 else
 {
+    global $pdo;
 //delete sessions old
-mysql_query("DELETE FROM fun_ses WHERE (uid='".getuid_nick($usuario)."')");
+$pdo->exec("DELETE FROM fun_ses WHERE (uid='".getuid_nick($usuario)."')");
 $s = sha1($usuario.time());
 $sid = strtoupper("php_sessid:".(str_shuffle($s)));
 $tempo = time() + 1800;
 ///insert into in database sid session
-mysql_query("INSERT INTO fun_ses SET id = '".$sid."', uid = '".getuid_nick($usuario)."', expiretm = '".$tempo."' ");
+$sql = "INSERT INTO fun_ses SET id =:id, uid =:usuario, expiretm =:tempo ";
+$stmt = $pdo->prepare($sql);
+$stmt->bindValue(':id', $sid);
+$stmt->bindValue(':usuario', getuid_nick($usuario));
+$stmt->bindValue(':tempo', $tempo);
+$stmt->execute();
 echo "<p align=\"center\">";
 echo "<img src=\"images/logo.png\" alt=\"\"><br />";
 echo "<br />";
