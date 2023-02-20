@@ -27,11 +27,11 @@ else
 $usuario = $_GET["usuario"];
 }
 //verification in user name
-$v_usuario = "SELECT COUNT(*) FROM fun_users WHERE name =:name";
-$stmt = $pdo->prepare($v_usuario);
-$stmt->bindValue(':name',$usuario);
-$stmt->execute();
-if($v_usuario[0]==0 OR empty($v_usuario[0]))
+$stmt = $pdo->prepare("SELECT COUNT(*) FROM fun_users WHERE name = ?");
+$stmt->execute([$usuario]);
+$v_usuario = $stmt->fetchColumn();
+
+if($v_usuario == 0)
 {
 echo "<p align=\"center\">";
 echo "<img src=\"images/logo.png\" alt=\"\"><br />";
@@ -45,12 +45,11 @@ echo "</p>";
 else
 {
 //verification in username and password if are correct
-$v_senha = "SELECT COUNT(*) FROM fun_users WHERE name = :name AND pass = :pass";
-$stmt = $pdo->prepare($v_senha);
-$stmt->bindValue(':name', $usuario);
-$stmt->bindValue(':pass', substr($senha, 4, 32));
-$stmt->execute();
-if($v_senha[0]==0 OR empty($v_senha[0]))
+$stmt = $pdo->prepare("SELECT COUNT(*) FROM fun_users WHERE name = ? AND pass = ?");
+$stmt->execute([$usuario, substr($senha,4, 32)]);
+$v_senha = $stmt->fetchColumn();
+
+if($v_senha == 0)
 {
 echo "<p align=\"center\">";
 echo "<img src=\"images/logo.png\" alt=\"\"><br />";
@@ -63,19 +62,18 @@ echo "</p>";
 }
 else
 {
-    global $pdo;
 //delete sessions old
-$pdo->exec("DELETE FROM fun_ses WHERE (uid='".getuid_nick($usuario)."')");
+$stmt = $pdo->prepare("DELETE FROM fun_ses WHERE (uid =?)");
+$stmt->execute([getuid_nick($usuario)]);
+
 $s = sha1($usuario.time());
 $sid = strtoupper("php_sessid:".(str_shuffle($s)));
 $tempo = time() + 1800;
+
 ///insert into in database sid session
-$sql = "INSERT INTO fun_ses SET id =:id, uid =:usuario, expiretm =:tempo ";
-$stmt = $pdo->prepare($sql);
-$stmt->bindValue(':id', $sid);
-$stmt->bindValue(':usuario', getuid_nick($usuario));
-$stmt->bindValue(':tempo', $tempo);
-$stmt->execute();
+$stmt = $pdo->prepare("INSERT INTO fun_ses (id, uid, expiretm) VALUES (?, ?, ?)");
+$stmt->execute([$sid, getuid_nick($usuario), $tempo]);
+
 echo "<p align=\"center\">";
 echo "<img src=\"images/logo.png\" alt=\"\"><br />";
 echo "<br />";
