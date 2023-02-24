@@ -21,10 +21,10 @@ $uid = getuid_sid(isset($sid)? $sid: null);
 if(ip_ban(ver_ip(), navegador()))
 {
 echo "<p align=\"center\">";
-echo "<img src=\"images/notok.gif\" alt=\"\">Desculpe, mais voc� teve o BAN m�ximo(<b>IP</b>)!";
+echo "<img src=\"images/notok.gif\" alt=\"\">Desculpe, mais você teve o BAN máximo(<b>IP</b>)!";
 echo "<br />";
 echo "<br />";
-$infos_ban = mysql_fetch_array(mysql_query("SELECT tempo, motivo FROM fun_ban WHERE ip='".ver_ip()."' AND browser='".navegador()."' AND tipoban='2'"));
+$infos_ban = $pdo->query("SELECT tempo, motivo FROM fun_ban WHERE ip='".ver_ip()."' AND browser='".navegador()."' AND tipoban='2'")->fetch();
 echo "Tempo para acabar sua penalidade: " . tempo_msg($infos_ban[0]);
 echo "<br />";
 echo "Motivo da sua penalidade: <b>".htmlspecialchars($infos_ban[1])."</b>";
@@ -34,7 +34,7 @@ exit();
 if(is_banido($uid))
 {
 echo "<p align=\"center\">";
-echo "<img src=\"images/notok.gif\" alt=\"\">Desculpe, mais voc� foi banido do site!";
+echo "<img src=\"images/notok.gif\" alt=\"\">Desculpe, mais você foi banido do site!";
 echo "<br />";
 echo "<br />";
 $infos_ban = $pdo->query("SELECT tempo, motivo FROM fun_ban WHERE uid='".$uid."' AND (tipoban='1' OR tipoban='2')")->fetch();
@@ -44,7 +44,7 @@ echo "Motivo da sua penalidade: <b>".htmlspecialchars($infos_ban[1])."</b>";
 exit();
 }
 //logged
-if((is_logado(isset($sid)? $sid: null)==false)||($uid==0) AND $action!="")
+if((is_logado($sid)==false) || ($uid==0) AND $action!="")
 {
 echo "<p align=\"center\">";
 echo "Você não está logado!<br /><br />";
@@ -53,7 +53,7 @@ echo "</p>";
 exit();
 }
 //update ip and browser
-$pdo->exec("UPDATE fun_users SET browserm='".navegador()."', ipadd='".ver_ip()."' WHERE id='".getuid_sid(isset($sid)? $sid: null)."'");
+$pdo->query("UPDATE fun_users SET browserm='".navegador()."', ipadd='".ver_ip()."' WHERE id='".getuid_sid(isset($sid)? $sid: null)."'");
 ////////////////////////////////////////main page
 if($action=="main")
 {

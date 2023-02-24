@@ -285,11 +285,10 @@ return $acc;
 function getnick_uid2($uid)
 {
     global $pdo;
-$unick = "SELECT name FROM fun_users WHERE id=:uid";
-$stmt = $pdo->prepare($unick);
-$stmt->bindValue(':uid', $uid);
-$stmt->execute();
-return $unick[0];
+$stmt = $pdo->prepare("SELECT name FROM fun_users WHERE id=:uid");
+$stmt->execute(array(':uid'=>$uid));
+$result = $stmt->fetch(PDO::FETCH_ASSOC);
+return $result['name'];
 }
 function getuage_sid($sid)
 {
@@ -717,7 +716,7 @@ function is_logado($sid)
 {
     global $pdo;
 //delete old sessions first
-$deloldses = $pdo->exec("DELETE FROM fun_ses WHERE expiretm<'".time()."'");
+$deloldses = $pdo->query("DELETE FROM fun_ses WHERE expiretm<'".time()."'");
 //does sessions exist?
 $sesx = $pdo->query("SELECT COUNT(*) FROM fun_ses WHERE id='".$sid."'")->fetch();
 if($sesx[0]>0)
@@ -729,27 +728,71 @@ return false;
 //yip it's logged in
 //first extend its session expirement time
 $xtm = (time() + (60*getsxtm())) ;
-$extxtm = $pdo->exec("UPDATE fun_ses SET expiretm='".$xtm."' WHERE id='".$sid."'");
+$extxtm = $pdo->query("UPDATE fun_ses SET expiretm='".$xtm."' WHERE id='".$sid."'");
 return true;
 }else{
 //nope its session must be expired or something
 return false;
 }
 }
+/*
+function is_logado($sid)
+{
+    global $pdo;
+  //delete old sessions first
+  $stmt = $pdo->query("DELETE FROM fun_ses WHERE expiretm < '".time()."'");
+
+  //does sessions exist?
+  $stmt = $pdo->prepare('SELECT COUNT(*) FROM fun_ses WHERE id = :sid');
+  $stmt->bindParam(':sid', $sid);
+  $stmt->execute();
+  $sesx = $stmt->fetch();
+
+  if($sesx[0] > 0)
+  {
+    if(!isuser(getuid_sid($sid)))
+    {
+      return false;
+    }
+    //yip it's logged in
+    //first extend its session expirement time
+    $xtm = (time() + (60*getsxtm())) ;
+    $stmt = $pdo->prepare('UPDATE fun_ses SET expiretm = :xtm WHERE id = :sid');
+    $stmt->bindParam(':xtm', $xtm);
+    $stmt->bindParam(':sid', $sid);
+    $stmt->execute();
+    return true;
+  }
+  else
+  {
+    //nope its session must be expired or something
+    return false;
+  }
+}
+*/
 ////////////////////////Get user nick from session id
 function getnick_sid($sid)
 {
-$uid = mysql_fetch_array(mysql_query("SELECT uid FROM fun_ses WHERE id='".$sid."'"));
-$uid = $uid[0];
-return getnick_uid($uid);
+    global $pdo;
+    $query = $pdo->prepare("SELECT uid FROM fun_ses WHERE id=:sid");
+    $query->execute(array(":sid" => $sid));
+    $uid = $query->fetch(PDO::FETCH_COLUMN);
+
+    $query = $pdo->prepare("SELECT name FROM fun_users WHERE id=:uid");
+    $query->execute(array(":uid" => $uid));
+    $unick = $query->fetch(PDO::FETCH_COLUMN);
+
+    return $unick;
 }
 ////////////////////////Get user id from session id
 function getuid_sid($sid)
 {
     global $pdo;
-$uid = $pdo->query("SELECT uid FROM fun_ses WHERE id='".$sid."'")->fetch();
-$uid = isset($uid[0])? $uid[0]: null;
-return $uid;
+    $stmt = $pdo->prepare("SELECT uid FROM fun_ses WHERE id=:sid");
+    $stmt->bindParam(':sid', $sid);
+    $stmt->execute();
+    $uid = $stmt->fetch(PDO::FETCH_ASSOC);
+    return $uid['uid'];
 }
 function getnotcount($uid)
 {
@@ -805,62 +848,63 @@ deleteClub($uclub[0]);
 }
 ///////funcao para atualizar o usuario
 function adicionar_online($uid, $place)
-{
+{ 
+    global $pdo;
 /////delete inactive users
 $tm = time() ;
 $timeout = $tm - 1800; //time out = 30 minutos
-$deloff = mysql_query("DELETE FROM fun_online WHERE actvtime <'".$timeout."'");
+$deloff = $pdo->query("DELETE FROM fun_online WHERE actvtime <'".$timeout."'");
 ///now try to add user to online list and add total time online
-$lastactive = mysql_fetch_array(mysql_query("SELECT lastact FROM fun_users WHERE id='".$uid."'"));
+$lastactive = $pdo->query("SELECT lastact FROM fun_users WHERE id='".$uid."'")->fetch();
 $tolsla = time() - $lastactive[0];
-$totaltimeonline = mysql_fetch_array(mysql_query("SELECT tottimeonl FROM fun_users WHERE id='".$uid."'"));
+$totaltimeonline = $pdo->query("SELECT tottimeonl FROM fun_users WHERE id='".$uid."'")->fetch();
 $totaltimeonline = $totaltimeonline[0] + $tolsla;
 $tf = $lastactive[0]+300;
 $timee = time();
 if($tf>$timee)
 {
-$res = mysql_query("UPDATE fun_users SET tottimeonl='".$totaltimeonline."' WHERE id='".$uid."'");
+$res = $pdo->query("UPDATE fun_users SET tottimeonl='".$totaltimeonline."' WHERE id='".$uid."'");
 }
-$totaltimeonline = mysql_fetch_array(mysql_query("SELECT tempon FROM fun_users WHERE id='".$uid."'"));
+$totaltimeonline = $pdo->query("SELECT tempon FROM fun_users WHERE id='".$uid."'")->fetch();
 $totaltimeonline = $totaltimeonline[0] + $tolsla;
 $tf = $lastactive[0]+300;
 $timee = time();
 if($tf>$timee)
 {
-$res = mysql_query("UPDATE fun_users SET tempon='".$totaltimeonline."' WHERE id='".$uid."'");
+$res = $pdo->query("UPDATE fun_users SET tempon='".$totaltimeonline."' WHERE id='".$uid."'");
 }
-$info = mysql_fetch_array(mysql_query("SELECT tempon, plusses FROM fun_users WHERE id='".$uid."'"));
+$info = $pdo->query("SELECT tempon, plusses FROM fun_users WHERE id='".$uid."'")->fetch();
 $tempon = floor($info[0]/60);
 if($tempon>59)
 {
 $pontos = $info[1] + 10;
-mysql_query("UPDATE fun_users SET tempon='0', plusses='".$pontos."' WHERE id='".$uid."'");
+$pdo->query("UPDATE fun_users SET tempon='0', plusses='".$pontos."' WHERE id='".$uid."'");
 }
 $ttime = time();
-$res = mysql_query("UPDATE fun_users SET lastact='".$ttime."' WHERE id='".$uid."'");
-$res = mysql_query("INSERT INTO fun_online SET userid='".$uid."', actvtime='".$ttime."', place='".$place."', placedet='".$plclink."'");
+$res = $pdo->query("UPDATE fun_users SET lastact='".$ttime."' WHERE id='".$uid."'");
+$res = $pdo->query("INSERT INTO fun_online SET userid='".$uid."', actvtime='".$ttime."', place='".$place."', placedet='".$plclink."'");
 if(!$res)
 {
 //most probably userid already in the online list
 //so just update the place and time
-$res = mysql_query("UPDATE fun_online SET actvtime='".$ttime."', place='".$place."', placedet='".$plclink."' WHERE userid='".$uid."'");
+$res = $pdo->query("UPDATE fun_online SET actvtime='".$ttime."', place='".$place."', placedet='".$plclink."' WHERE userid='".$uid."'");
 }
-$maxmem=mysql_fetch_array(mysql_query("SELECT value FROM fun_settings WHERE id='2'"));
-$result = mysql_fetch_array(mysql_query("SELECT COUNT(*) FROM fun_online"));
+$maxmem=$pdo->query("SELECT value FROM fun_settings WHERE id='2'")->fetch();
+$result = $pdo->query("SELECT COUNT(*) FROM fun_online")->fetch();
 if($result[0]>=$maxmem[0])
 {
 $tnow = date("D/d/M/Y - H:i", time());
-mysql_query("UPDATE fun_settings set name='".$tnow."', value='".$result[0]."' WHERE id='2'");
+$pdo->query("UPDATE fun_settings set name='".$tnow."', value='".$result[0]."' WHERE id='2'");
 }
-$maxtoday = mysql_fetch_array(mysql_query("SELECT ppl FROM fun_mpot WHERE ddt='".date("d m y")."'"));
+$maxtoday = $pdo->query("SELECT ppl FROM fun_mpot WHERE ddt='".date("d m y")."'")->fetch();
 if($maxtoday[0]==0||$maxtoday=="")
 {
-mysql_query("INSERT INTO fun_mpot SET ddt='".date("d/m/y")."', ppl='1', dtm='".date("H:i:s")."'");
+$pdo->query("INSERT INTO fun_mpot SET ddt='".date("d/m/y")."', ppl='1', dtm='".date("H:i:s")."'");
 $maxtoday[0]=1;
 }
 if($result[0]>=$maxtoday[0])
 {
-mysql_query("UPDATE fun_mpot SET ppl='".$result[0]."', dtm='".date("H:i:s")."' WHERE ddt='".date("d m y")."'");
+$pdo->query("UPDATE fun_mpot SET ppl='".$result[0]."', dtm='".date("H:i:s")."' WHERE ddt='".date("d m y")."'");
 }
 }
 /////////////////////Get members online
@@ -1265,9 +1309,10 @@ return $rmc[0];
 ///////////////////////////function counter
 function addvisitor()
 {
-$cc = mysql_fetch_array(mysql_query("SELECT value FROM fun_settings WHERE name='counter'"));
+    global $pdo;
+$cc = $pdo->query("SELECT value FROM fun_settings WHERE name='counter'")->fetch();
 $cc = $cc[0]+1;
-$res = mysql_query("UPDATE fun_settings SET value='".$cc."' WHERE name='counter'");
+$res = $pdo->query("UPDATE fun_settings SET value='".$cc."' WHERE name='counter'");
 }
 function scharin($word)
 {
